@@ -42,3 +42,10 @@ for dependency in dependencies:
         if any(tag_value in dependency for tag_value in tag_values):
             dependency_tags[dependency].append(tag)
 
+tag_keys = list(tags.keys())
+with open('dependencies.csv', 'w') as csv_file:
+    csv_file.write('Dependency,' + ','.join(tag_keys) + '\n')
+    for dependency, dependency_tag_list in dependency_tags.items():
+        row = [dependency] + ['X' if tag in dependency_tag_list else '' for tag in tag_keys]
+        csv_file.write(','.join(row) + '\n')
+
