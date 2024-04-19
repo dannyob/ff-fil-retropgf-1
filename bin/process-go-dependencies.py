@@ -24,12 +24,16 @@ def parse_go_mod_dependencies(go_mod_content):
                 dependencies.append(line.split(' ')[0])
     return dependencies
 
+corporate_sponsors = ['uber', 'filecoinproject', 'google']
+
 url = "https://raw.githubusercontent.com/filecoin-project/lotus/master/go.mod"
 response = requests.get(url).content
 dependencies = parse_go_mod_dependencies(response.decode('utf-8'))
 
+filtered_dependencies = [dep for dep in dependencies if not any(corp in dep for corp in corporate_sponsors)]
+
 # Example usage: Print the list of dependencies
-for dep in dependencies:
+for dep in filtered_dependencies:
     print(dep)
 
 # use the devil's regexp to pull out lines describing dependencies
