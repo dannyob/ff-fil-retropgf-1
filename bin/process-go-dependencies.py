@@ -30,7 +30,15 @@ tags = {
         "batteries_included" : ['golang.org', 'gotest.tools', 'golang' ]
         }
 
+dependency_tags = {}
+
 url = "https://raw.githubusercontent.com/filecoin-project/lotus/master/go.mod"
 response = requests.get(url).content
 dependencies = parse_go_mod_dependencies(response.decode('utf-8'))
+
+for dependency in dependencies:
+    dependency_tags[dependency] = []
+    for tag, tag_values in tags.items():
+        if any(tag_value in dependency for tag_value in tag_values):
+            dependency_tags[dependency].append(tag)
 
