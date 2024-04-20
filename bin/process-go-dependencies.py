@@ -4,13 +4,32 @@ import os
 import subprocess
 import json
 
-def parse_go_mod_dependencies(go_mod_content):
+cache_dir = os.path.expanduser('~/.cache/lotus/')
+
+tags = { 
+        "corporate_sponsor" : ['uber', 'google', 'gogo', 'zondax', 'hashicorp'],
+        "ecosystem_projects" : ['filecoin-project','ipfs','libp2p', 'multiformats', 'ipld'],
+        "batteries_included" : ['golang.org', 'gotest.tools', 'golang' ]
+        }
+
+def install_locally():
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+        subprocess.run(['git', 'clone', '--depth', '1', 'https://github.com/filecoin-project/lotus/', cache_dir], check=True)
+        os.chdir(cache_dir)
+        subprocess.run(['git', 'submodule', 'update', '--init', '--recursive'], check=True)
+
+def parse_go_mod_dependencies(go_mod_path):
     """
     Parses the go.mod file content and returns a list of dependencies.
 
-    :param go_mod_content: Content of a go.mod file
+    :param go_mod_path: path of go.mod
     :return: List of dependencies
     """
+
+    with open(go_mod_path, 'r') as go_mod_file:
+        go_mod_content = go_mod_file.read()
+
     dependencies = []
     lines = go_mod_content.split('\n')
     inside_require_block = False
@@ -27,26 +46,10 @@ def parse_go_mod_dependencies(go_mod_content):
                 dependencies.append(line.split(' ')[0])
     return dependencies
 
-tags = { 
-        "corporate_sponsor" : ['uber', 'google', 'gogo', 'zondax', 'hashicorp'],
-        "ecosystem_projects" : ['filecoin-project','ipfs','libp2p', 'multiformats', 'ipld'],
-        "batteries_included" : ['golang.org', 'gotest.tools', 'golang' ]
-        }
-
 dependency_tags = {}
 
-cache_dir = os.path.expanduser('~/.cache/lotus/')
-if not os.path.exists(cache_dir):
-    os.makedirs(cache_dir)
-    subprocess.run(['git', 'clone', '--depth', '1', 'https://github.com/filecoin-project/lotus/', cache_dir], check=True)
-    os.chdir(cache_dir)
-    subprocess.run(['git', 'submodule', 'update', '--init', '--recursive'], check=True)
-
 go_mod_path = os.path.join(cache_dir, 'go.mod')
-with open(go_mod_path, 'r') as go_mod_file:
-    go_mod_content = go_mod_file.read()
-
-dependencies = parse_go_mod_dependencies(go_mod_content)
+dependencies = parse_go_mod_dependencies(go_mod_path)
 
 for dependency in dependencies:
     dependency_tags[dependency] = []
