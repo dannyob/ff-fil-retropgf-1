@@ -54,24 +54,9 @@ def get_go_mod_download_json():
     """
     os.chdir(cache_dir)
     go_mod_download_output = subprocess.check_output(['go', 'mod', 'download', '-json'])
-    return list(GoModDownloadJsonParser(go_mod_download_output))
+    json_objects = json.loads('[' + go_mod_download_output.decode('utf-8').replace('}\n{', '},{') + ']')
+    return json_objects
 
-class GoModDownloadJsonParser:
-    def __init__(self, json_string):
-        self.json_string = json_string
-        self.index = 0
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        json_objects = json.loads('[' + self.json_string.decode('utf-8').replace('}\n{', '},{') + ']')
-        if self.index < len(json_objects):
-            result = json_objects[self.index]
-            self.index += 1
-            return result
-        else:
-            raise StopIteration
 
 dependency_tags = {}
 
