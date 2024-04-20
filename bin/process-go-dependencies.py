@@ -4,6 +4,16 @@ import os
 import subprocess
 import json
 
+def get_go_mod_download_json():
+    """
+    Changes to the cached lotus directory, runs `go mod download -json`, and returns the parsed JSON.
+
+    :return: Parsed JSON output from `go mod download -json`
+    """
+    os.chdir(cache_dir)
+    go_mod_download_output = subprocess.run(['go', 'mod', 'download', '-json'], check=True, stdout=subprocess.PIPE).stdout
+    return json.loads(go_mod_download_output)
+
 cache_dir = os.path.expanduser('~/.cache/lotus/')
 
 tags = { 
