@@ -53,8 +53,8 @@ def get_go_mod_download_json():
     :return: Parsed JSON output from `go mod download -json`
     """
     os.chdir(cache_dir)
-    go_mod_download_output = subprocess.run(['go', 'mod', 'download', '-json'], check=True, stdout=subprocess.PIPE).stdout
-    return [i for i in GoModDownloadJsonParser(go_mod_download_output)]
+    go_mod_download_output = subprocess.check_output(['go', 'mod', 'download', '-json'])
+    return list(GoModDownloadJsonParser(go_mod_download_output))
 
 class GoModDownloadJsonParser:
     def __init__(self, json_string):
@@ -65,30 +65,13 @@ class GoModDownloadJsonParser:
         return self
 
     def __next__(self):
-        if self.index >= len(self.json_string):
-            raise StopIteration
-
-        json_data = ''
-        while self.index < len(self.json_string):
-            char = self.json_string[self.index]
+        json_objects = json.loads('[' + self.json_string.decode('utf-8').replace('}\n{', '},{') + ']')
+        if self.index < len(json_objects):
+            result = json_objects[self.index]
             self.index += 1
-
-            if char == '{':
-                json_data = char
-                brace_count = 1
-                while brace_count > 0:
-                    if self.index >= len(self.json_string):
-                        raise ValueError("Incomplete JSON object")
-                    next_char = self.json_string[self.index]
-                    self.index += 1
-                    json_data += next_char
-                    if next_char == '{':
-                        brace_count += 1
-                    elif next_char == '}':
-                        brace_count -= 1
-                print(json_data)
-                return json.loads(json_data)
-        raise StopIteration
+            return result
+        else:
+            raise StopIteration
 
 dependency_tags = {}
 
