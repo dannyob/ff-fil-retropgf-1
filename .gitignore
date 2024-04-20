@@ -269,3 +269,4 @@ tags
 [._]*.un~
 
 # End of https://www.toptal.com/developers/gitignore/api/emacs,python,scheme,clojure,vim
+.aider*
