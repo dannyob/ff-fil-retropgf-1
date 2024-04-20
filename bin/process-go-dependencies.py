@@ -1,5 +1,8 @@
 #!/bin/env python
 import requests
+import os
+import subprocess
+import json
 
 def parse_go_mod_dependencies(go_mod_content):
     """
