@@ -53,3 +53,19 @@ with open('dependencies.csv', 'w') as csv_file:
         row = [dependency] + ['X' if tag in dependency_tag_list else '' for tag in tag_keys]
         csv_file.write(','.join(row) + '\n')
 
+def checkout_and_get_go_mod_json():
+    cache_dir = os.path.expanduser('~/.cache/lotus/')
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+        subprocess.run(['git', 'clone', '--depth', '1', 'https://github.com/filecoin-project/lotus/', cache_dir], check=True)
+    os.chdir(cache_dir)
+    subprocess.run(['git', 'submodule', 'update', '--init', '--recursive'], check=True)
+    go_mod_json_output = subprocess.run(['go', 'mod', 'download', '-json'], stdout=subprocess.PIPE, check=True).stdout
+    try:
+        go_mod_json = json.loads(go_mod_json_output)
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON from go mod download -json: {e}")
+        return None
+    return go_mod_json
+
+# Note: The rest of the existing code remains unchanged.
