@@ -4,16 +4,6 @@ import os
 import subprocess
 import json
 
-def get_go_mod_download_json():
-    """
-    Changes to the cached lotus directory, runs `go mod download -json`, and returns the parsed JSON.
-
-    :return: Parsed JSON output from `go mod download -json`
-    """
-    os.chdir(cache_dir)
-    go_mod_download_output = subprocess.run(['go', 'mod', 'download', '-json'], check=True, stdout=subprocess.PIPE).stdout
-    return json.loads(go_mod_download_output)
-
 cache_dir = os.path.expanduser('~/.cache/lotus/')
 
 tags = { 
@@ -56,6 +46,50 @@ def parse_go_mod_dependencies(go_mod_path):
                 dependencies.append(line.split(' ')[0])
     return dependencies
 
+def get_go_mod_download_json():
+    """
+    Changes to the cached lotus directory, runs `go mod download -json`, and returns the parsed JSON.
+
+    :return: Parsed JSON output from `go mod download -json`
+    """
+    os.chdir(cache_dir)
+    go_mod_download_output = subprocess.run(['go', 'mod', 'download', '-json'], check=True, stdout=subprocess.PIPE).stdout
+    return [i for i in GoModDownloadJsonParser(go_mod_download_output)]
+
+class GoModDownloadJsonParser:
+    def __init__(self, json_string):
+        self.json_string = json_string
+        self.index = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.index >= len(self.json_string):
+            raise StopIteration
+
+        json_data = ''
+        while self.index < len(self.json_string):
+            char = self.json_string[self.index]
+            self.index += 1
+
+            if char == '{':
+                json_data = char
+                brace_count = 1
+                while brace_count > 0:
+                    if self.index >= len(self.json_string):
+                        raise ValueError("Incomplete JSON object")
+                    next_char = self.json_string[self.index]
+                    self.index += 1
+                    json_data += next_char
+                    if next_char == '{':
+                        brace_count += 1
+                    elif next_char == '}':
+                        brace_count -= 1
+                print(json_data)
+                return json.loads(json_data)
+        raise StopIteration
+
 dependency_tags = {}
 
 go_mod_path = os.path.join(cache_dir, 'go.mod')
@@ -68,6 +102,9 @@ for dependency in dependencies:
             dependency_tags[dependency].append(tag)
 
 tag_keys = list(tags.keys())
+
+print(get_go_mod_download_json())
+
 with open('dependencies.csv', 'w') as csv_file:
     csv_file.write('Dependency,' + ','.join(tag_keys) + '\n')
     for dependency, dependency_tag_list in dependency_tags.items():
