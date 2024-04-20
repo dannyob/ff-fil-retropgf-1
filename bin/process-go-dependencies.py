@@ -1,7 +1,6 @@
 #!/bin/env python
 import requests
 import os
-import os
 import subprocess
 import json
 
@@ -59,7 +58,6 @@ tag_keys = list(tags.keys())
 with open('dependencies.csv', 'w') as csv_file:
     csv_file.write('Dependency,' + ','.join(tag_keys) + '\n')
     for dependency, dependency_tag_list in dependency_tags.items():
-        row = [dependency] + ['X' if tag in dependency_tag_list else '' for tag in tag_keys]
+        row = [dependency] + [tag if tag in dependency_tag_list else '' for tag in tag_keys]
         csv_file.write(','.join(row) + '\n')
 
-# Note: The rest of the existing code remains unchanged.
