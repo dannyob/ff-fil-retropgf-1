@@ -1,6 +1,7 @@
 #!/bin/env python
 import requests
 import os
+import sys
 import subprocess
 import json
 
@@ -9,7 +10,10 @@ cache_dir = os.path.expanduser('~/.cache/lotus/')
 tags = { 
         "corporate_sponsor" : ['uber', 'google', 'gogo', 'zondax', 'hashicorp'],
         "ecosystem_projects" : ['filecoin-project','ipfs','libp2p', 'multiformats', 'ipld'],
-        "batteries_included" : ['golang.org', 'gotest.tools', 'golang' ]
+        "batteries_included" : ['golang.org', 'gotest.tools', 'golang' ],
+        "github_sponsorship" : [],
+        "drips_sponsorship" : [],
+        "check_repo_manually" : []
         }
 
 def install_locally():
@@ -46,7 +50,7 @@ def parse_go_mod_dependencies(go_mod_path):
                 dependencies.append(line.split(' ')[0])
     return dependencies
 
-def get_go_mod_download_json():
+def get_go_mod_download_metadata():
     """
     Changes to the cached lotus directory, runs `go mod download -json`, and returns the parsed JSON.
 
@@ -57,17 +61,36 @@ def get_go_mod_download_json():
     json_objects = json.loads('[' + go_mod_download_output.decode('utf-8').replace('}\n{', '},{') + ']')
     return json_objects
 
+def  check_for_funding_info(local_directory):
+    r = []
+    if os.path.exists(os.path.join(local_directory, ".github/FUNDING.yml")):
+        r.append("github")
+    if os.path.exists(os.path.join(local_directory, "FUNDING.json")):
+        r.append("drips")
+    return r
 
 dependency_tags = {}
 
 go_mod_path = os.path.join(cache_dir, 'go.mod')
 dependencies = parse_go_mod_dependencies(go_mod_path)
+go_mod_metadata = get_go_mod_download_metadata()
 
 for dependency in dependencies:
     dependency_tags[dependency] = []
     for tag, tag_values in tags.items():
         if any(tag_value in dependency for tag_value in tag_values):
             dependency_tags[dependency].append(tag)
+
+    local_directory = [ j.get("Dir") for j in go_mod_metadata if dependency == j.get("Path")]
+    if len(local_directory) != 1:
+        print(f"Could not find local install directory for {dependency}", file=sys.stderr)
+        dependency_tags[dependency].append("check_repo_manually")
+    else:
+        funding_info = check_for_funding_info(local_directory[0]) 
+        if 'github' in funding_info:
+            dependency_tags[dependency].append("github_sponsorship")
+        if 'drips' in funding_info:
+            dependency_tags[dependency].append("drips_sponsorship")
 
 tag_keys = list(tags.keys())
 
