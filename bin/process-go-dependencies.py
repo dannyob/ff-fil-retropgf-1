@@ -71,9 +71,7 @@ for dependency in dependencies:
 
 tag_keys = list(tags.keys())
 
-print(get_go_mod_download_json())
-
-with open('dependencies.csv', 'w') as csv_file:
+with sys.stdout as csv_file:
     csv_file.write('Dependency,' + ','.join(tag_keys) + '\n')
     for dependency, dependency_tag_list in dependency_tags.items():
         row = [dependency] + [tag if tag in dependency_tag_list else '' for tag in tag_keys]
